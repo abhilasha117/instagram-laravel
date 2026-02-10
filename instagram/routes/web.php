@@ -23,5 +23,16 @@ Route::get('/post/{username}/{code}', [InstagramController::class, 'viewPost'])
 Route::post('/post/{id}/{username}/like', [InstagramController::class, 'boostLike'])
     ->name('post.like');
 
-Route::post('/post/{postId}/{username}/boost', [PostController::class, 'boost'])->name('post.boost');
+Route::post(
+    '/post/{postId}/{username}/boost',
+    [PostController::class,'boost']
+)->name('post.boost');
+Route::get('/profile/{username}/load-more',
+    [InstagramController::class, 'loadMorePosts']
+)->name('profile.loadMore');
+
+Route::get('/history', function () {
+    return view('history');
+})->middleware('auth');
+
 

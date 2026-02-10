@@ -7,19 +7,30 @@ use Illuminate\Http\Request;
 class PostController extends Controller
 {
     public function boost(Request $request, $postId, $username)
-    {
-        $increment = (int) $request->increment;
-        $amount    = (int) $request->amount;
+{
+    $request->validate([
+        'type'     => 'required|in:like,comment,share',
+        'quantity' => 'required|integer|min:1',
+        'amount'   => 'required|integer'
+    ]);
 
-        // Fetch current likes from DB or cache here - example uses static baseLikes for demo
-        $baseLikes = 1000;
-        $newLikes  = $baseLikes + $increment;
+    $pricePerUnit = 18;
 
-        // Save new likes count to DB here (optional)
+    $calculatedAmount = $request->quantity * $pricePerUnit;
 
-        return response()->json([
-            'likes' => $newLikes,
-            'paid'  => $amount
-        ]);
+    if ($calculatedAmount !== (int)$request->amount) {
+        return response()->json(['error'=>'Invalid amount'], 422);
     }
+
+    // Example DB update (pseudo)
+    // Post::where('id',$postId)->increment($request->type.'s', $request->quantity);
+
+    return response()->json([
+        'status'  => true,
+        'type'    => ucfirst($request->type),
+        'quantity'=> $request->quantity,
+        'amount'  => $calculatedAmount
+    ]);
+}
+
 }

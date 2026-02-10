@@ -18,7 +18,7 @@ body {
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
 }
 
-.post-container { max-width:420px; margin:auto; }
+
 
 .post-header {
     display:flex;
@@ -125,26 +125,60 @@ body {
     20% { opacity:1; }
     100% { opacity:0; transform:translate(-50%,-40px); }
 }
+/* ===== DESKTOP DEFAULT (LAPTOP VIEW) ===== */
+body {
+    background: #121212;
+    margin: 50px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+}
+
+.app-container {
+    max-width: 1800px;        /* Instagram desktop width */
+    margin: 50px auto;
+    background: #000;
+    border-radius: 10px;
+}
+
+/* Center profile header nicely */
+.post-header {
+    padding: 24px;
+}
+
+/* Make grid larger on desktop */
+.grid {
+    gap: 6px;
+}
+
+/* ===== MOBILE VIEW ONLY ===== */
+@media (max-width: 768px) {
+
+    body {
+        background: #000;
+    }
+
+    .app-container {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .profile-header {
+        padding: 0 16px;
+    }
+
+    .grid {
+        gap: 2px;
+    }
+}
 </style>
 </head>
-
-<body>
-
+<div class="post-wrapper">
 <div class="post-container">
-<div class="post-modal" id="postModal">
-    <button id="backBtn" class="btn btn-dark" style="
-        position: absolute;
-        top: 15px;
-        left: 20px;
-        z-index: 9999;
-        padding: 6px 12px;
-        font-size: 14px;
-        border-radius: 6px;
-    ">← Back</button>
 
-    <span class="close-btn" id="closePost">&times;</span>
-    <div id="postContent"></div>
-</div>
+    <button id="backBtn" class="btn btn-dark"
+        style="position:absolute;top:15px;left:20px;z-index:9999;">
+        ← Back
+    </button>
 
     <div class="post-header">
         <strong>{{ $username }}</strong>
@@ -172,87 +206,215 @@ body {
 
     <div class="post-time">2 days ago</div>
 
-    <!-- BOOST -->
-    <div class="dropdown w-100 mt-3 px-3">
-        <button class="btn w-100 likeDropdown" data-bs-toggle="dropdown">
-            Boost ❤️
+    <!-- BOOST BUTTONS -->
+    <div class="boost-box mt-3 mx-3 text-center">
+        <button class="btn btn-dark w-100 mb-2" onclick="openBoostModal('like')">
+            ❤️ Boost Likes
+        </button>
+        <button class="btn btn-dark w-100 mb-2" onclick="openBoostModal('comment')">
+            💬 Boost Comments
+        </button>
+        <button class="btn btn-dark w-100" onclick="openBoostModal('share')">
+            ✈️ Boost Shares
         </button>
 
-        <ul class="dropdown-menu w-100">
-            <li>
-                <a class="dropdown-item boost-option" href="#" data-likes="10">❤️ +10 Likes — ₹10</a>
-            </li>
-            <li>
-                <a class="dropdown-item boost-option" href="#" data-likes="50">❤️ +50 Likes — ₹45</a>
-            </li>
-            <li>
-                <a class="dropdown-item boost-option" href="#" data-likes="100">❤️ +100 Likes — ₹80</a>
-            </li>
-        </ul>
+        <div class="small mt-2 text-muted">
+            🚀 Boost your post visibility
+        </div>
     </div>
+</div>
+</div>
 
-    <div class="text-center small mt-2 boostPreview">
-        🚀 Boost your post visibility
+<!-- FLOAT TEXT -->
+<div class="likeFloat"></div>
+
+<!-- BOOST MODAL -->
+<div class="modal fade" id="boostModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white rounded-4">
+
+      <!-- HEADER -->
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-semibold" id="boostModalTitle">
+          Boost Post
+        </h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body">
+        <input type="hidden" id="boostType">
+
+        <!-- Quantity Input -->
+        <div class="mb-3">
+          <label class="form-label small text-muted">
+            Enter Quantity
+          </label>
+          <input
+            type="number"
+            id="boostQuantity"
+            class="form-control bg-black text-white border-secondary"
+            placeholder="e.g. 1000"
+            min="100"
+            step="100"
+            oninput="calculateBoostAmount()"
+          />
+          <small class="text-muted">
+            Minimum 100 • ₹18 per 1000
+          </small>
+        </div>
+
+        <!-- Price Box -->
+        <div class="p-3 rounded-3 border border-secondary bg-black">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Base price</span>
+            <span>₹18 / 1000</span>
+          </div>
+
+          <div class="d-flex justify-content-between fw-semibold">
+            <span>Total amount</span>
+            <span>₹<span id="boostAmount">0</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer border-0">
+        <button class="btn btn-success w-100 fw-semibold"
+                onclick="confirmBoost()">
+          Confirm Boost
+        </button>
+      </div>
+
     </div>
-
-    <div class="likeFloat"></div>
-
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-document.querySelectorAll('.post-container').forEach(container => {
-    const likesDiv    = container.querySelector('.post-likes');
-    const previewText = container.querySelector('.boostPreview');
-    const likeBtn     = container.querySelector('.likeDropdown');
-    const likeFloat   = container.querySelector('.likeFloat');
+/* ===============================
+   CONFIG
+================================ */
+const BASE_PRICE = 18; // ₹18 per 1000
+let boostModalInstance = null;
 
-    if (!likesDiv || !previewText || !likeBtn || !likeFloat) return;
+/* ===============================
+   OPEN BOOST MODAL
+================================ */
+function openBoostModal(type) {
+    document.getElementById('boostType').value = type;
 
-    const dropdown = bootstrap.Dropdown.getOrCreateInstance(likeBtn);
+    const titleMap = {
+        like: 'Confirm Likes Boost',
+        comment: 'Confirm Comments Boost',
+        share: 'Confirm Shares Boost'
+    };
 
-    let currentLikes = parseInt(likesDiv.innerText.replace(/\D/g, '')) || 0;
+    document.getElementById('boostModalTitle').innerText = titleMap[type];
 
-    function showLikeFloat(amount) {
-        likeFloat.innerText = `❤️ +${amount} Likes`;
-        likeFloat.classList.remove('like-animate');
-        void likeFloat.offsetWidth; // trigger reflow
-        likeFloat.classList.add('like-animate');
+    document.getElementById('boostQuantity').value = '';
+    document.getElementById('boostAmount').innerText = '0';
+
+    const modal = new bootstrap.Modal(document.getElementById('boostModal'));
+    modal.show();
+}
+
+/* ===============================
+   CALCULATE TOTAL AMOUNT (LIVE)
+================================ */
+function calculateBoostAmount() {
+    const qtyInput = document.getElementById('boostQuantity');
+    const qty = parseInt(qtyInput.value) || 0;
+
+    if (qty <= 0) {
+        document.getElementById('boostAmount').innerText = '0';
+        return;
     }
 
-    container.querySelectorAll('.boost-option').forEach(option => {
-        option.addEventListener('click', function (e) {
-            e.preventDefault();
+    // ₹18 per 1000 logic
+    const total = (qty / 1000) * BASE_PRICE;
 
-            const increment = parseInt(this.dataset.likes);
+    document.getElementById('boostAmount').innerText = total.toFixed(2);
+}
 
-            currentLikes += increment;
-            likesDiv.innerText = currentLikes.toLocaleString() + ' likes';
+/* ===============================
+   CONFIRM BOOST (API CALL)
+================================ */
+function confirmBoost() {
+    // ✅ CLOSE MODAL IMMEDIATELY
+    const modalEl = document.getElementById('boostModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    modalInstance.hide();
 
-            showLikeFloat(increment);
+    // OPTIONAL: still call API in background
+    const type = document.getElementById('boostType').value;
+    const qty  = parseInt(document.getElementById('boostQuantity').value) || 0;
+    const amount = (qty / 1000) * BASE_PRICE;
 
-            // Close the dropdown
-            dropdown.hide();
-
-            // UI feedback
-            likeBtn.disabled = true;
-            likeBtn.innerText = 'Boosting...';
-            previewText.innerText = `✅ Boosted +${increment} likes`;
-
-            setTimeout(() => {
-                likeBtn.disabled = false;
-                likeBtn.innerText = 'Boost ❤️';
-                previewText.innerText = '🚀 Boost your post visibility';
-            }, 1000);
-        });
+    fetch("{{ route('post.boost', [$post['id'], $username]) }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            type: type,
+            quantity: qty,
+            amount: amount
+        })
+    }).catch(() => {
+        console.log('API failed, modal already closed');
     });
-});
-const backBtn = document.getElementById('backBtn');
-backBtn.addEventListener('click', () => {
+}
+
+
+/* ===============================
+   FLOATING UI FEEDBACK
+================================ */
+function showBoostToast(type, qty, amount) {
+    let text = '';
+
+    if (type === 'like') {
+        text = `❤️ +${qty} Likes`;
+        updateLikes(qty);
+    } else if (type === 'comment') {
+        text = `💬 +${qty} Comments`;
+    } else if (type === 'share') {
+        text = `✈️ +${qty} Shares`;
+    }
+
+    const floatDiv = document.querySelector('.likeFloat');
+    if (!floatDiv) return;
+
+    floatDiv.innerText = text;
+    floatDiv.classList.remove('like-animate');
+    void floatDiv.offsetWidth; // reflow
+    floatDiv.classList.add('like-animate');
+}
+
+/* ===============================
+   UPDATE LIKES (UI ONLY)
+================================ */
+function updateLikes(increment) {
+    const likesDiv = document.querySelector('.post-likes');
+    if (!likesDiv) return;
+
+    let currentLikes = parseInt(
+        likesDiv.innerText.replace(/\D/g, '')
+    ) || 0;
+
+    currentLikes += increment;
+    likesDiv.innerText = currentLikes.toLocaleString() + ' likes';
+}
+
+/* ===============================
+   BACK BUTTON
+================================ */
+document.getElementById('backBtn')?.addEventListener('click', () => {
     history.back();
 });
-
 </script>
+
 </body>
 </html>

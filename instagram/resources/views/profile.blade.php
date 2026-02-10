@@ -12,26 +12,22 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-       /* ========== RESET ========== */
-* {
-    box-sizing: border-box;
-}
+/* ========== RESET ========== */
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
     background: #121212;
     color: #fff;
 }
 
-/* ========== DESKTOP DEFAULT (NORMAL BROWSER) ========== */
+/* ========== CONTAINER ========== */
 .app-container {
-    max-width: 420px;
+    max-width: 1500px;
     margin: 30px auto;
     background: #000;
-    border: 1px solid #333;
-    border-radius: 12px;
-    overflow: hidden;
+    border-radius: 8px;
 }
 
 /* TOP BAR */
@@ -43,9 +39,7 @@ body {
 }
 
 /* PROFILE */
-.profile-header {
-    padding: 0 16px;
-}
+.profile-header { padding: 24px; }
 
 .profile-row {
     display: flex;
@@ -82,8 +76,9 @@ body {
 .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
+    gap: 6px;
     margin-top: 12px;
+    margin-bottom: 60px; /* allow scroll space */
 }
 
 .post-thumb {
@@ -97,129 +92,63 @@ body {
     object-fit: cover;
 }
 
-/* MODAL */
-.post-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.95);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.post-modal img {
-    max-width: 90%;
-    max-height: 90%;
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 32px;
-    cursor: pointer;
-}
-
-/* ========== MOBILE VIEW (ONLY WHEN INSPECT / SMALL WIDTH) ========== */
+/* MOBILE */
 @media (max-width: 768px) {
-
-    body {
-        background: #000;
-    }
-
     .app-container {
         max-width: 100%;
         margin: 0;
-        border: none;
         border-radius: 0;
     }
-
-    .profile-pic {
-        width: 85px;
-        height: 85px;
-    }
+    .profile-header { padding: 0 16px; }
+    .grid { gap: 2px; }
 }
-/* ===== DESKTOP DEFAULT (LAPTOP VIEW) ===== */
-body {
-    background: #121212;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+html, body {
+    height: auto;
+    min-height: 100%;
 }
-
-.app-container {
-    max-width: 1500px;        /* Instagram desktop width */
-    margin: 30px auto;
-    background: #000;
-    border-radius: 8px;
-}
-
-/* Center profile header nicely */
-.profile-header {
-    padding: 24px;
-}
-
-/* Make grid larger on desktop */
 .grid {
-    gap: 6px;
-}
-
-/* ===== MOBILE VIEW ONLY ===== */
-@media (max-width: 768px) {
-
-    body {
-        background: #000;
-    }
-
-    .app-container {
-        max-width: 100%;
-        margin: 0;
-        border-radius: 0;
-    }
-
-    .profile-header {
-        padding: 0 16px;
-    }
-
-    .grid {
-        gap: 2px;
-    }
+    margin-bottom: 120px;
 }
 
 
     </style>
 </head>
-
 <body>
 <div class="app-container">
 
+    <!-- TOP BAR -->
     <div class="top-bar">
         <div><i class="fa-solid fa-lock"></i> {{ $profile['username'] }}</div>
         <div>
             <i class="fa-solid fa-plus me-3"></i>
+
             <div class="dropdown d-inline">
-    <i class="fa-solid fa-bars"
-       data-bs-toggle="dropdown"
-       aria-expanded="false"
-       style="cursor:pointer; font-size:18px;"></i>
+                <i class="fa-solid fa-bars"
+                   data-bs-toggle="dropdown"
+                   style="cursor:pointer;"></i>
 
-    <ul class="dropdown-menu dropdown-menu-end"
-        style="background:#121212; border:1px solid #333;">
-        <li>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit"
-                        class="dropdown-item text-danger">
-                    Log out
-                </button>
-            </form>
-        </li>
-    </ul>
-</div>
+                <ul class="dropdown-menu dropdown-menu-end"
+                    style="background:#121212;border:1px solid #333;">
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger">
+                                Log out
+                            </button>
+                        </form>
+                    </li>
 
+                    <li>
+                        <a href="/history" class="dropdown-item text-light">
+                            Order History
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 
+    <!-- PROFILE HEADER -->
     <div class="profile-header">
         <div class="profile-row">
             <img src="{{ $profile['profile_pic_url_hd'] }}" class="profile-pic">
@@ -235,32 +164,106 @@ body {
             <strong>{{ $profile['full_name'] }}</strong><br>
             <p>{{ $profile['biography'] }}</p>
         </div>
+
+        <!-- POSTS GRID -->
         @if($posts->count())
-<div class="grid">
-@foreach($posts as $post)
-<a href="{{ url('/post/'.$profile['username'].'/'.$post['code']) }}"
-   class="post-thumb">
-    <img src="{{ $post['image'] }}">
-</a>
+        <div class="grid"
+             id="postGrid"
+             data-username="{{ $profile['username'] }}"
+             data-cursor="{{ $cursor }}"
+             data-has-next="{{ $hasNext ? '1' : '0' }}">
 
-@endforeach
-</div>
+            @foreach($posts as $post)
+                <a href="{{ url('/post/'.$profile['username'].'/'.$post['code']) }}"
+                   class="post-thumb"
+                   data-post="{{ $post['code'] }}">
+                    <img src="{{ $post['image'] }}">
+                </a>
+            @endforeach
 
-@else
-<p style="color:#888;text-align:center;margin-top:20px;">
-    No posts available
-</p>
-@endif
+        </div>
+        @else
+            <p style="color:#888;text-align:center;margin-top:20px;">
+                No posts available
+            </p>
+        @endif
 
+        <!-- LOADER -->
+        <div id="loader" style="display:none;text-align:center;padding:20px;">
+            <div class="spinner-border text-light"></div>
+            <p style="margin-top:8px;color:#aaa;">Loading posts...</p>
+        </div>
 
     </div>
 </div>
 
-
 <script>
+let loading = false;
 
+window.addEventListener("scroll", function () {
+
+    const grid = document.getElementById("postGrid");
+    const loader = document.getElementById("loader");
+
+    if (!grid) return;
+    if (loading) return;
+
+    // use cursor instead of hasNext flag
+    if (!grid.dataset.cursor) return;
+
+    const reachedBottom =
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 200;
+
+    if (!reachedBottom) return;
+
+    loading = true;
+    loader.style.display = "block";
+
+    const username = grid.dataset.username;
+    const cursor = grid.dataset.cursor;
+
+    fetch(`/profile/${username}/load-more?cursor=${cursor}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.posts || data.posts.length === 0) {
+                grid.dataset.cursor = "";
+                loader.style.display = "none";
+                loading = false;
+                return;
+            }
+
+            data.posts.forEach(post => {
+
+                if (document.querySelector(`[data-post="${post.code}"]`)) {
+                    return;
+                }
+
+                const link = document.createElement("a");
+                link.href = `/post/${username}/${post.code}`;
+                link.className = "post-thumb";
+                link.dataset.post = post.code;
+
+                const img = document.createElement("img");
+                img.src = post.image;
+
+                link.appendChild(img);
+                grid.appendChild(link);
+            });
+
+            grid.dataset.cursor = data.next_cursor || "";
+
+            loader.style.display = "none";
+            loading = false;
+        })
+        .catch(() => {
+            loader.style.display = "none";
+            loading = false;
+        });
+});
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
